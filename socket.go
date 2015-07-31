@@ -409,6 +409,9 @@ func (s *Socket) readLoop() {
 				// Don't do anything, The ping timer was already reset.
 			case cmdClose:
 				// Close the socket.
+				// ADD
+				Server.unregister <- s
+				// END-ADD
 				s.bs.Close()
 			case cmdData:
 				// Send the data to the final read channel.

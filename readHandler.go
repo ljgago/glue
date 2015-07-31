@@ -64,3 +64,59 @@ func (s *Socket) stopReadHandler() {
 		s.readHandler = nil
 	}
 }
+
+//##########################//
+//### Broadcast Handlers ###//
+//##########################//
+
+type Router struct {
+  sockets		     	map [*Socket]bool    // Registered clients.
+  broadcast  			chan []byte         // Inbound messages from the clients.
+  register    		chan *Socket        // Register requests from the clients.
+  unregister  		chan *Socket       	// Unregister requests from clients.
+
+}
+
+var Server = Router {
+  sockets: 		   	make(map [*Socket]bool),
+  broadcast:  		make(chan []byte),
+  register:   		make(chan *Socket),
+  unregister: 		make(chan *Socket),
+}
+
+func (r *Router) runRouter() {
+  go func() {
+  	for {
+	    select {
+	    case s := <-r.register:
+	      r.sockets[s] = true
+	    case s := <-r.unregister:
+	      if _, ok := r.sockets[s]; ok {
+	        delete(r.sockets, s)
+	      }
+	    case m := <-r.broadcas:
+	      for s := range r.sockets {
+	        s.Write(m)
+          /*select {
+	        case s.writeChan <- m:
+	        default:
+	          delete(r.sockets, s)
+	        }*/
+	      }
+	    }
+	  }
+  }()
+}
+
+func (r *Router) writeBroadcast(rawData string) {
+  r.broadcast <- []byte(rawData)
+}
+
+func WriteBroadcast(event string, msg string) {
+	rawData := `{"event":` + event + `,"data":` + msg + `}`
+	writeBroadcast(rawData)
+}
+
+func RunRouter() {
+  runRouter()
+}
