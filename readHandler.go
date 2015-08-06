@@ -94,9 +94,9 @@ func (r *Router) runRouter() {
 	      if _, ok := r.sockets[s]; ok {
 	        delete(r.sockets, s)
 	      }
-	    case m := <-r.broadcas:
+	    case m := <-r.broadcast:
 	      for s := range r.sockets {
-	        s.Write(m)
+	        s.Write(string(m))
           /*select {
 	        case s.writeChan <- m:
 	        default:
@@ -114,9 +114,9 @@ func (r *Router) writeBroadcast(rawData string) {
 
 func WriteBroadcast(event string, msg string) {
 	rawData := `{"event":` + event + `,"data":` + msg + `}`
-	writeBroadcast(rawData)
+	Server.writeBroadcast(rawData)
 }
 
 func RunRouter() {
-  runRouter()
+  Server.runRouter()
 }
